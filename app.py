@@ -17,7 +17,7 @@ def authorize_oauth():
 
 def load_sheet_data():
     client = authorize_oauth()
-    sheet = client.open_by_url('YOUR_SHEET_URL')
+    sheet = client.open_by_url('https://docs.google.com/spreadsheets/d/1hdflZHrim-qPNHeCgPr3J_6OBbggccjftziVGawzgY8/edit')
     worksheet = sheet.worksheet("Summary")
     rows = worksheet.get_all_values()
     header = rows[2]
@@ -25,7 +25,7 @@ def load_sheet_data():
     return pd.DataFrame(data, columns=header)
 
 def fetch_sku_data_by_parent(parent_code, df):
-    matching = df[df['Parent Code'] == parent_code]
+    matching = df[df['Parent Code'] == parent_code.upper()]
     if matching.empty:
         return f"No SKUs found for parent code '{parent_code}'."
     
@@ -33,7 +33,7 @@ def fetch_sku_data_by_parent(parent_code, df):
     for _, row in matching.iterrows():
         messages.append(
             f"\n🔹 *{row['SKU Code']}*\n"
-            f"GT Available: {row['Available Quantity']} | Online Available: {row['Available Quantity.']}\n"
+            f"GT Stock: {row['Available Quantity']} | Online Stock: {row['Available Quantity.']}\n"
             f"GT Pendency: {row['Pendency GT']} | Online Pendency: {row['Pendency Online']}"
         )
     return "\n".join(messages)
