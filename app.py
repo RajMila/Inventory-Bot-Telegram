@@ -38,20 +38,43 @@ def fetch_sku_data_by_parent(parent_code, df):
         )
     return "\n".join(messages)
 
+
+def split_message(text, limit=4000):
+    lines = text.split('\n')
+    chunks = []
+    current_chunk = ''
+    for line in lines:
+        if len(current_chunk + '\n' + line) <= limit:
+            current_chunk += '\n' + line
+        else:
+            chunks.append(current_chunk.strip())
+            current_chunk = line
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+    return chunks
+    
+
 @app.route(f"/{TOKEN}", methods=["POST"])
 def telegram_webhook():
     data = request.get_json()
+    if "message" not in data or "text" not in data["message"]:
+        return "No message", 200
     chat_id = data['message']['chat']['id']
     text = data['message']['text'].strip().upper()
     parent_code = text.replace("STOCK", "").strip()
 
     df = load_sheet_data()
     reply = fetch_sku_data_by_parent(parent_code, df)
+    chunks = split_message(reply)
 
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        data={"chat_id": chat_id, "text": reply, "parse_mode": "Markdown"}
-    )
+    for chunk in chunks:
+        send_message(chat_id, chunk)
+
+
+    # requests.post(
+    #     f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+    #     data={"chat_id": chat_id, "text": reply, "parse_mode": "Markdown"}
+    # )
 
     return "ok", 200
 
