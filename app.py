@@ -4,9 +4,10 @@ import pandas as pd
 import gspread
 from google.oauth2.credentials import Credentials
 import json
+import os
 
 app = Flask(__name__)
-TOKEN = '7912629345:AAFMn55hBItM_6aCfBh6yJaSu_-ZDdQiAPk'
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 def authorize_oauth():
     with open('/etc/secrets/token.json') as f:
