@@ -78,6 +78,13 @@ def telegram_webhook():
 
     return "ok", 200
 
+def send_message(chat_id, text):
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        data={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
+    )
+
+
 @app.route("/", methods=["GET"])
 def index():
     return "Telegram bot is running!"
