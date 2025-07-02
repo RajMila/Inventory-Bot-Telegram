@@ -6,3 +6,4 @@ gunicorn
 twilio
 google-auth
 google-auth-oauthlib
+openpyxl
