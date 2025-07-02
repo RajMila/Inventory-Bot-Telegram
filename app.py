@@ -41,6 +41,15 @@ def load_pendency_data():
 def get_unique_ss_names(df):
     return sorted(df['Trimmed SS Name'].dropna().unique().tolist())
 
+def get_summary_text(df, ss_name):
+    filtered = df[df['Trimmed SS Name'] == ss_name]
+    filtered['Item Quantity'] = pd.to_numeric(filtered['Item Quantity'], errors='coerce').fillna(0)
+    filtered['Item Price Excluding Tax'] = pd.to_numeric(filtered['Item Price Excluding Tax'], errors='coerce').fillna(0)
+    total_qty = filtered['Item Quantity'].sum()
+    total_amt = filtered['Item Price Excluding Tax'].sum()
+    return f"\U0001F4CB *Summary for {ss_name}*\nPending Qty: *{int(total_qty)}*\nPending Amount: *₹{total_amt:,.2f}*"
+
+
 def send_excel_file(chat_id, df):
     output = io.BytesIO()
     df.to_excel(output, index=False)
@@ -116,21 +125,13 @@ def webhook():
     if chat_id in user_state and 'ss_name' not in user_state[chat_id]:
         if text in pendency_df['Trimmed SS Name'].values:
             user_state[chat_id]['ss_name'] = text
-            options = [[{"text": "\U0001F4E5 Download Excel"}]]
-            reply_markup = {"keyboard": options, "one_time_keyboard": True, "resize_keyboard": True}
-            send_message(chat_id, f"You selected *{text}*. Now choose an option:", reply_markup)
-        else:
-            send_message(chat_id, "Invalid SS. Please try again.")
-        return "ok", 200
-
-    if chat_id in user_state and 'ss_name' in user_state[chat_id]:
-        ss_name = user_state[chat_id]['ss_name']
-        if "excel" in text.lower():
-            filtered_df = pendency_df[pendency_df['Trimmed SS Name'] == ss_name]
+            reply = get_summary_text(pendency_df, text)
+            send_message(chat_id, reply)
+            filtered_df = pendency_df[pendency_df['Trimmed SS Name'] == text]
             send_excel_file(chat_id, filtered_df)
         else:
-            send_message(chat_id, "Invalid option. Please select again.")
-        user_state.pop(chat_id)
+            send_message(chat_id, "Invalid SS. Please try again.")
+        user_state.pop(chat_id, None)
         return "ok", 200
 
     send_message(chat_id, "Type /start to begin")
