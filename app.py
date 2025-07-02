@@ -122,7 +122,7 @@ def webhook():
         return "ok", 200
 
     if chat_id in user_state and 'ss_name' not in user_state[chat_id]:
-        if text in pendency_df['SS Name'].values:
+        if text in pendency_df['Trimmed SS Name'].values:
             user_state[chat_id]['ss_name'] = text
             options = [[{"text": "\U0001F4CA Full Summary"}], [{"text": "\U0001F51D Top SKUs"}], [{"text": "\U0001F4E5 Excel Download"}]]
             reply_markup = {"keyboard": options, "one_time_keyboard": True, "resize_keyboard": True}
