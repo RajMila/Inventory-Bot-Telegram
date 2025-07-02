@@ -116,7 +116,7 @@ def webhook():
     if chat_id in user_state and 'ss_name' not in user_state[chat_id]:
         if text in pendency_df['Trimmed SS Name'].values:
             user_state[chat_id]['ss_name'] = text
-            options = [[{"text": "\U0001F4E5 Excel Download"}]]
+            options = [[{"text": "\U0001F4E5 Download Excel"}]]
             reply_markup = {"keyboard": options, "one_time_keyboard": True, "resize_keyboard": True}
             send_message(chat_id, f"You selected *{text}*. Now choose an option:", reply_markup)
         else:
