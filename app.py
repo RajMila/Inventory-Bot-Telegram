@@ -39,7 +39,7 @@ def load_pendency_data():
     return pd.DataFrame(data, columns=header)
 
 def get_unique_ss_names(df):
-    return sorted(df['SS Name'].dropna().unique().tolist())
+    return sorted(df['Trimmed SS Name'].dropna().unique().tolist())
 
 def get_summary(df, ss_name):
     filtered = df[df['Trimmed SS Name'] == ss_name]
