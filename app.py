@@ -41,30 +41,6 @@ def load_pendency_data():
 def get_unique_ss_names(df):
     return sorted(df['Trimmed SS Name'].dropna().unique().tolist())
 
-def get_summary(df, ss_name):
-    filtered = df[df['Trimmed SS Name'] == ss_name]
-    messages = [f"\U0001F4CA *Full Summary for {ss_name}*"]
-    for _, row in filtered.iterrows():
-        messages.append(
-            f"\n\U0001F539 *{row['Trimmed SKU']}*\n"
-            f"GT Stock: {row['Item Quantity']}\n"
-            f"GT Pendency: {row['Item Price Excluding Tax']}"
-        )
-    return "\n".join(messages)
-
-def get_top_skus(df, ss_name, top_n=5):
-    filtered = df[df['Trimmed SS Name'] == ss_name].copy()
-    filtered['Item Price Excluding Tax'] = pd.to_numeric(filtered['Pendency GT'], errors='coerce').fillna(0)
-    filtered = filtered.sort_values(by='Item Price Excluding Tax', ascending=False).head(top_n)
-    messages = [f"\U0001F51D *Top {top_n} SKUs by GT Pendency for {ss_name}*"]
-    for _, row in filtered.iterrows():
-        messages.append(
-            f"\n\U0001F539 *{row['Trimmed SKU']}*\n"
-            f"GT Stock: {row['Item Quantity']}\n"
-            f"GT Pendency: {row['Item Price Excluding Tax']}"
-        )
-    return "\n".join(messages)
-
 def send_excel_file(chat_id, df):
     output = io.BytesIO()
     df.to_excel(output, index=False)
@@ -73,14 +49,30 @@ def send_excel_file(chat_id, df):
     requests.post(f"https://api.telegram.org/bot{TOKEN}/sendDocument", data={'chat_id': chat_id}, files=files)
 
 def send_message(chat_id, text, reply_markup=None):
-    data = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown"
-    }
-    if reply_markup:
-        data["reply_markup"] = json.dumps(reply_markup)
-    requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data)
+    chunks = split_message(text)
+    for chunk in chunks:
+        data = {
+            "chat_id": chat_id,
+            "text": chunk,
+            "parse_mode": "Markdown"
+        }
+        if reply_markup and chunk == chunks[-1]:
+            data["reply_markup"] = json.dumps(reply_markup)
+        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data)
+
+def split_message(text, limit=1500):
+    lines = text.split('\n')
+    chunks = []
+    current_chunk = ''
+    for line in lines:
+        if len(current_chunk + '\n' + line) <= limit:
+            current_chunk += '\n' + line
+        else:
+            chunks.append(current_chunk.strip())
+            current_chunk = line
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+    return chunks
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
@@ -124,7 +116,7 @@ def webhook():
     if chat_id in user_state and 'ss_name' not in user_state[chat_id]:
         if text in pendency_df['Trimmed SS Name'].values:
             user_state[chat_id]['ss_name'] = text
-            options = [[{"text": "\U0001F4CA Full Summary"}], [{"text": "\U0001F51D Top SKUs"}], [{"text": "\U0001F4E5 Excel Download"}]]
+            options = [[{"text": "\U0001F4E5 Excel Download"}]]
             reply_markup = {"keyboard": options, "one_time_keyboard": True, "resize_keyboard": True}
             send_message(chat_id, f"You selected *{text}*. Now choose an option:", reply_markup)
         else:
@@ -133,13 +125,7 @@ def webhook():
 
     if chat_id in user_state and 'ss_name' in user_state[chat_id]:
         ss_name = user_state[chat_id]['ss_name']
-        if "summary" in text.lower():
-            reply = get_summary(pendency_df, ss_name)
-            send_message(chat_id, reply)
-        elif "top" in text.lower():
-            reply = get_top_skus(pendency_df, ss_name)
-            send_message(chat_id, reply)
-        elif "excel" in text.lower():
+        if "excel" in text.lower():
             filtered_df = pendency_df[pendency_df['Trimmed SS Name'] == ss_name]
             send_excel_file(chat_id, filtered_df)
         else:
