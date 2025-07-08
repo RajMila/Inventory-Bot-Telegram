@@ -3,7 +3,6 @@ gspread
 oauth2client
 pandas
 gunicorn
-twilio
 google-auth
 google-auth-oauthlib
 openpyxl
