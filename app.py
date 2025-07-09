@@ -105,49 +105,49 @@ def webhook():
             print("No message in data", flush=True)
             return "no message", 200
 
-    chat_id = message["chat"]["id"]
-    text = message.get("text", "").strip()
-
-    # STOCK QUERY PATH
-    if text.upper().startswith("STOCK"):
-        stock_df = load_stock_data()
-        parent_code = text.upper().replace("STOCK", "").strip()
-        matching = stock_df[stock_df['Parent Code'] == parent_code.upper()]
-        if matching.empty:
-            send_message(chat_id, f"No SKUs found for parent code '{parent_code}'.")
-        else:
-            reply = [f"\U0001F4E6 *Parent Code: {parent_code}*"]
-            for _, row in matching.iterrows():
-                reply.append(
-                    f"\n\U0001F539 *{row['SKU Code']}*\n"
-                    f"GT Stock: {row['Available Quantity']} | Online Stock: {row['Available Quantity.']}\n"
-                    # f"GT Pendency: {row['Pendency GT']} | Online Pendency: {row['Pendency Online']}"
-                )
-            send_message(chat_id, "\n".join(reply))
-        return "ok", 200
-
-    # SS PENDENCY PATH
-    pendency_df = load_pendency_data()
-
-    if text.lower() in ["/start", "start"]:
-        ss_list = get_unique_ss_names(pendency_df)
-        keyboard = [[{"text": ss}] for ss in ss_list]
-        reply_markup = {"keyboard": keyboard, "one_time_keyboard": True, "resize_keyboard": True}
-        user_state[chat_id] = {}
-        send_message(chat_id, "Select a Super Stockist (SS):", reply_markup)
-        return "ok", 200
-
-    if chat_id in user_state and 'ss_name' not in user_state[chat_id]:
-        if text in pendency_df['Trimmed SS Name'].values:
-            user_state[chat_id]['ss_name'] = text
-            reply = get_summary_text(pendency_df, text)
-            send_message(chat_id, reply)
-            filtered_df = pendency_df[pendency_df['Trimmed SS Name'] == text]
-            send_excel_file(chat_id, filtered_df)
-        else:
-            send_message(chat_id, "Invalid SS. Please try again.")
-        user_state.pop(chat_id, None)
-        return "ok", 200
+        chat_id = message["chat"]["id"]
+        text = message.get("text", "").strip()
+    
+        # STOCK QUERY PATH
+        if text.upper().startswith("STOCK"):
+            stock_df = load_stock_data()
+            parent_code = text.upper().replace("STOCK", "").strip()
+            matching = stock_df[stock_df['Parent Code'] == parent_code.upper()]
+            if matching.empty:
+                send_message(chat_id, f"No SKUs found for parent code '{parent_code}'.")
+            else:
+                reply = [f"\U0001F4E6 *Parent Code: {parent_code}*"]
+                for _, row in matching.iterrows():
+                    reply.append(
+                        f"\n\U0001F539 *{row['SKU Code']}*\n"
+                        f"GT Stock: {row['Available Quantity']} | Online Stock: {row['Available Quantity.']}\n"
+                        # f"GT Pendency: {row['Pendency GT']} | Online Pendency: {row['Pendency Online']}"
+                    )
+                send_message(chat_id, "\n".join(reply))
+            return "ok", 200
+    
+        # SS PENDENCY PATH
+        pendency_df = load_pendency_data()
+    
+        if text.lower() in ["/start", "start"]:
+            ss_list = get_unique_ss_names(pendency_df)
+            keyboard = [[{"text": ss}] for ss in ss_list]
+            reply_markup = {"keyboard": keyboard, "one_time_keyboard": True, "resize_keyboard": True}
+            user_state[chat_id] = {}
+            send_message(chat_id, "Select a Super Stockist (SS):", reply_markup)
+            return "ok", 200
+    
+        if chat_id in user_state and 'ss_name' not in user_state[chat_id]:
+            if text in pendency_df['Trimmed SS Name'].values:
+                user_state[chat_id]['ss_name'] = text
+                reply = get_summary_text(pendency_df, text)
+                send_message(chat_id, reply)
+                filtered_df = pendency_df[pendency_df['Trimmed SS Name'] == text]
+                send_excel_file(chat_id, filtered_df)
+            else:
+                send_message(chat_id, "Invalid SS. Please try again.")
+            user_state.pop(chat_id, None)
+            return "ok", 200
 
     send_message(chat_id, "Type /start to begin")
     print("Message received:", message, flush=True)
