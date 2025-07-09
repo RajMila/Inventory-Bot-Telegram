@@ -84,7 +84,7 @@ def split_message(text, limit=1500):
         chunks.append(current_chunk.strip())
     return chunks
 
-@app.route(f"/{TOKEN}", methods=["POST"])
+@app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json()
     message = data.get("message")
