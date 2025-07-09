@@ -68,7 +68,7 @@ def send_message(chat_id, text, reply_markup=None):
         }
         if reply_markup and chunk == chunks[-1]:
             data["reply_markup"] = json.dumps(reply_markup)
-        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data)
+        resp=requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data)
         print("Send message response:", resp.status_code, resp.text, flush=True)
 
 def split_message(text, limit=1500):
