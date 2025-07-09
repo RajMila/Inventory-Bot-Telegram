@@ -86,7 +86,7 @@ def split_message(text, limit=1500):
 
 @app.route("/webhook", methods=["POST","GET"])
 def webhook():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
     print("Webhook received:", data)
     message = data.get("message")
     if not message:
