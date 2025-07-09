@@ -15,7 +15,8 @@ user_state = {}
 
 # Authorize Google Sheets
 def authorize_oauth():
-    with open('/etc/secrets/token.json') as f:
+    with open('/root/Inventory-Bot-Telegram/token.json') as f:
+    # with open('/etc/secrets/token.json') as f:
         token_data = json.load(f)
     creds = Credentials.from_authorized_user_info(token_data)
     return gspread.authorize(creds)
