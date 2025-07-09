@@ -149,8 +149,8 @@ def webhook():
             user_state.pop(chat_id, None)
             return "ok", 200
 
-    send_message(chat_id, "Type /start to begin")
-    print("Message received:", message, flush=True)
+        send_message(chat_id, "Type /start to begin")
+        print("Message received:", message, flush=True)
         return "ok", 200
     except Exception as e:
         import traceback
