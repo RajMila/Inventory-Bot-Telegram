@@ -84,13 +84,26 @@ def split_message(text, limit=1500):
         chunks.append(current_chunk.strip())
     return chunks
 
-@app.route("/webhook", methods=["POST","GET"])
+# @app.route("/webhook", methods=["POST","GET"])
+# def webhook():
+#     data = request.get_json(force=True, silent=True)
+#     print("Webhook received:", data)
+#     message = data.get("message")
+#     if not message:
+#         return "ok", 200
+
+@app.route("/webhook", methods=["POST", "GET"])
 def webhook():
-    data = request.get_json(force=True, silent=True)
-    print("Webhook received:", data)
-    message = data.get("message")
-    if not message:
-        return "ok", 200
+    try:
+        data = request.get_json(force=True, silent=True)
+        print("Webhook received:", data, flush=True)
+        if not data:
+            print("No data received", flush=True)
+            return "no data", 200
+        message = data.get("message")
+        if not message:
+            print("No message in data", flush=True)
+            return "no message", 200
 
     chat_id = message["chat"]["id"]
     text = message.get("text", "").strip()
@@ -137,7 +150,13 @@ def webhook():
         return "ok", 200
 
     send_message(chat_id, "Type /start to begin")
-    return "ok", 200
+    print("Message received:", message, flush=True)
+        return "ok", 200
+    except Exception as e:
+        import traceback
+        print("Webhook error:", e, flush=True)
+        print(traceback.format_exc(), flush=True)
+        return "error", 200
 
 @app.route("/")
 def home():
